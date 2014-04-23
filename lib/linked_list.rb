@@ -1,9 +1,15 @@
 class LinkedList
+  include Comparable
   attr_reader :size
+  attr_writer :first_item
 
   def initialize(*args)
     @size = 0
-    args.each { |item| add_item(item)  }
+    if args
+      args.each {|item| add_item(item)}
+    else
+      args = nil
+    end
   end
 
   def add_item(payload)
@@ -21,12 +27,16 @@ class LinkedList
   end
 
   def get(i)
-    raise IndexError if i < 0 or i >= size
+    raise IndexError if (i < 0) or (i  >= size)
     item = @first_item
     i.times do
       item = item.next_list_item
     end
     item.payload
+  end
+
+  def size
+    @size
   end
 
   def last
@@ -41,62 +51,114 @@ class LinkedList
     result = "|"
     item = @first_item
     until item.nil?
-      result << " :" + item.payload.to_s if item.payload.class == Symbol
-      result << " " + item.payload.to_s if item.payload.class == String
-      result << " " + item.payload.to_s if item.payload.class == Fixnum
+      result << " " + item.payload.to_s
       result << "," unless item.last?
       item = item.next_list_item
     end
     result + " |"
   end
 
-  alias [] get #<-- insteat of def [](index)
-               #                 get(index)
-               #               end
+  alias [] get #<-- alias means same as
 
-  def []=(i, new_arg)
-    current_item = @first_item
-    if i == 0
-      current_item.payload = new_arg
-    else
-      i.times do
-        current_item = current_item.next_list_item
-      end
-      current_item.payload = new_arg
+  def []=(index, new_payload)
+    item = @first_item
+    index.times do
+      item = item.next_list_item
     end
+    item.payload = new_payload
   end
 
   def remove(index)
-    @size -= 1
-    if index == 0
-      @first_item = @first_item.next_list_item
+    item = @first_item
+
+    raise IndexError if (index < 0) or (index >= @size)
+
+    if index != 0
+      (index-1).times {item = item.next_list_item}
+      item.next_list_item = item.next_list_item.next_list_item
     else
-      previous_item = get_item( index - 1 )
-      next_list_item = previous_item.next_list_item.next_list_item
-      previous_item.next_list_item = next_list_item
+      @first_item = @first_item.next_list_item
     end
+
+    @size = @size - 1
   end
 
-  def indexOf(payload)
-    item = @first_item
-    position = 0
-    until item.nil?
-      return position if item.payload == payload
-      position += 1
-      item = item.next_list_item
+  def indexOf(string)
+    if @size == 0
+      return nil
     end
-    nil
+
+    index = 0
+    item = @first_item
+
+    until item.payload == string
+      item = item.next_list_item
+      index += 1
+
+      if index == @size
+        index = nil
+        break
+      end
+    end
+    return index
   end
 
   def sorted?
+    is_sorted = false
+    index = 0
+
+    if @size <= 1
+      return true
+    else
     item = @first_item
-    until item.nil  or item.last?
-      return false if item > item.next_list_item
-      item = item.next_list_item
+      until item.next_list_item == nil
+        is_sorted = item <= item.next_list_item
+        item = item.next_list_item
+        index += 1
+          if is_sorted == false
+            return false
+          end
+      end
     end
-    true
+    return is_sorted
   end
 
+
+  def swap_with_next(index)
+    if index == @size -1
+      raise IndexError
+    end
+    item1 = get_item(index)
+    next_item = item1.next_list_item
+
+    if index == 0
+      @first_item = next_item
+      item1.next_list_item = item1.next_list_item.next_list_item
+    else
+      prev_item = get_item(index - 1)
+      prev_item.next_list_item = next_item
+      item1.next_list_item = item1.next_list_item.next_list_item
+    end
+    next_item.next_list_item = item1
+  end
+
+  def sort
+    counter_index = 0
+    until self.sorted?
+      item1 = get_item(counter_index)
+      item2 = get_item(counter_index + 1)
+      if item1 < item2
+        counter_index += 1
+      else
+        swap_with_next(counter_index)
+        counter_index = 0
+      end
+    end
+    self
+  end
+
+
+#------------PRIVATE-------------------#
   private
 
   def get_item(i)
@@ -107,112 +169,4 @@ class LinkedList
     end
     item
   end
-
 end
-
-
-=begin
-require 'linked_list_item'
-
-class LinkedList
-  attr_accessor :first_item
-  attr_accessor :last_item
-
-  def initialize(*args)
-    self.last_item = nil
-    args.each do |arg|
-      self.add_item(arg)
-    end
-  end
-
-  def add_item(payload)
-    new_item = LinkedListItem.new(payload)
-    if (self.first_item == nil)
-      self.first_item = new_item
-    else
-      current = self.first_item
-      while current.next_list_item != nil
-        current = current.next_list_item
-      end
-      current.next_list_item = new_item
-    end
-    self.last_item = new_item
-  end
-
-  def get(num)
-    current = self.first_item
-    raise IndexError if num < 0
-    (0..num).each do |x|
-      if (current == nil)
-        raise IndexError
-      elsif (x == num)
-        return current.payload
-      else
-        current = current.next_list_item
-      end
-    end
-  end
-
-  def size
-    size = 0
-    current = self.first_item
-    while current != nil
-      size += 1
-      current = current.next_list_item
-    end
-    size
-  end
-
-  def last
-    if (self.last_item == nil)
-      nil
-    else
-      self.last_item.payload
-    end
-  end
-
-  def to_s
-    x = "| "
-    current = self.first_item
-    while current != nil
-      x = x + current.payload.to_s
-      current = current.next_list_item
-      if (current != nil)
-        x = x + ","
-      end
-      x = x + " "
-    end
-    x = x + "|"
-    x
-  end
-
-  def [](num)
-    self.get(num)
-  end
-
-  def []=(num, newvalue)
-    current = self.first_item
-    (0..num).each do |x|
-      if (x == num)
-        current.payload = newvalue
-        break
-      elsif (current == nil)
-        raise IndexError
-      else
-        current = current.next_list_item
-      end
-    end
-  end
-
-  #def remove(num)
-  #  current = self.first_item
-  #  if (num < 0)
-  #    raise IndexError
-  #  end
-  #  (0..num).each do |x|
-  #    if (x == num)
-  #      current.payload = 
-  #end
-
-end
-=end

@@ -17,20 +17,10 @@ class LinkedListItem
   def next_list_item= (payload)
     raise ArgumentError if self === payload
     @next_list_item = payload
-=begin
-    if (payload === self)
-      raise ArgumentError
-    elsif (payload != [])
-      @next_list_item = payload
-    else
-      @next_list_item
-    end
-=end
   end
 
   def === (other)
     self.object_id === other.object_id
-    #self.equal? other
   end
 
   def last?
@@ -52,18 +42,5 @@ class LinkedListItem
       class_equality
     end
   end
-=begin
-    #self.payload <=> other.payload
-    primo = self.payload.to_s
-    secondo = other.payload.to_s
-
-    if (other.payload.class == Symbol && self.payload.class != Symbol)
-      -1
-    elsif (self.payload.class == Symbol && other.payload.class != Symbol)
-      1
-    else
-      primo <=> secondo
-    end
-=end
 
 end
